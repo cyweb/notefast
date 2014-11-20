@@ -9,7 +9,7 @@ How to Install Debian Base
 
 -> $sudo apt-get install python3-pyqt4
 
--> #python3 setup.py install
+-> $sudo python3 setup.py install
 
 
 How to Install Arch Base
@@ -18,4 +18,4 @@ How to Install Arch Base
 
 -> $sudo pacman -S python-pyqt4
 
--> #python3 setup.py install
+-> $sudo python3 setup.py install
