@@ -1,6 +1,6 @@
 notefast
 ========
-	NoteFast v1.0
+	[`NoteFast v1.0`](http://www.youtube.com/watch?v=HVbRUhX2EPo)
 	
 
 How to Install Debian Base
