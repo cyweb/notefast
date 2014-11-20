@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Name=NoteFast
+GenericName=NoteFast
+Exec=notefast
+Terminal=false                              
+Icon=/usr/share/notefast/icons/notefast.png
+Type=Application
+Categories=Application;
+

@@ -1,0 +1,4 @@
+include README.md setup.cfg setup.py TODO MANIFEST.in
+recursive-include bin *
+recursive-include data *
+recursive-include notefast *

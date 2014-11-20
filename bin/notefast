@@ -1,0 +1,167 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
+from PyQt4 import QtCore, QtGui
+import sqlite3,os,threading,time,sys
+import notefast.img_rc
+
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    _fromUtf8 = lambda s: s
+
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+        self.value=""
+        self.dbCheck()
+        MainWindow.setObjectName(_fromUtf8("MainWindow"))
+        MainWindow.setWindowModality(QtCore.Qt.ApplicationModal)
+        resolution = QtGui.QDesktopWidget().screenGeometry()
+        MainWindow.move((resolution.width() / 2) - (663 / 2),
+                  (resolution.height() / 2) - (350 / 2))
+        MainWindow.resize(663, 350)
+        MainWindow.setMinimumSize(QtCore.QSize(663, 350))
+        MainWindow.setMaximumSize(QtCore.QSize(663, 350))
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/note-2-24.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        MainWindow.setWindowIcon(icon)
+        MainWindow.setStyleSheet(_fromUtf8("#listWidget{ \n"
+"    border-color: rgb(0, 0, 0);\n"
+"}\n"
+"#plainTextEdit{ \n"
+"    background-image: url(:/images/noteit.png);\n"
+"    color: #000;\n"
+"    border-color: rgb(0, 0, 0);\n"
+"    line-height: 99%;\n"
+"    font: 12pt;\n"
+"}\n"
+"#pushButton{\n"
+"    background:none;\n"
+"    border:none;\n"
+"}\n"
+"#pushButton_2{\n"
+"    background:none;\n"
+"    border:none;\n"
+"}"))
+        self.centralWidget = QtGui.QWidget(MainWindow)
+        self.centralWidget.setMaximumSize(QtCore.QSize(663, 350))
+        self.centralWidget.setObjectName(_fromUtf8("centralWidget"))
+        self.plainTextEdit = QtGui.QPlainTextEdit(self.centralWidget)
+        self.plainTextEdit.setGeometry(QtCore.QRect(271, 9, 383, 330))
+        self.plainTextEdit.setSizeIncrement(QtCore.QSize(0, 0))
+        self.plainTextEdit.viewport().setProperty("cursor", QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.plainTextEdit.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.plainTextEdit.setAutoFillBackground(False)
+        self.plainTextEdit.setBackgroundVisible(False)
+        self.plainTextEdit.setCenterOnScroll(False)
+        self.plainTextEdit.setObjectName(_fromUtf8("plainTextEdit"))
+
+        self.listWidget = QtGui.QListWidget(self.centralWidget)
+        self.listWidget.setGeometry(QtCore.QRect(10, 10, 256, 320))
+        self.listWidget.setAutoFillBackground(True)
+        self.listAll()
+
+        self.flagList = self.listWidget
+        self.flagList.itemClicked.connect(self.load)
+
+        self.pushButton = QtGui.QPushButton(self.centralWidget)
+        self.pushButton.setGeometry(QtCore.QRect(100, 320, 24, 24))
+        self.pushButton.setAutoFillBackground(False)
+        self.pushButton.setText(_fromUtf8(""))
+        self.pushButton.setIcon(icon)
+        self.pushButton.setObjectName(_fromUtf8("pushButton"))
+        self.pushButton_2 = QtGui.QPushButton(self.centralWidget)
+        self.pushButton_2.setGeometry(QtCore.QRect(130, 320, 24, 24))
+        self.pushButton_2.setText(_fromUtf8(""))
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/images/delete-24.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.pushButton_2.setIcon(icon1)
+        self.pushButton_2.setObjectName(_fromUtf8("pushButton_2"))
+        MainWindow.setCentralWidget(self.centralWidget)
+
+        self.retranslateUi(MainWindow)
+        QtCore.QObject.connect(self.plainTextEdit, QtCore.SIGNAL(_fromUtf8("textChanged()")), self.changeText)
+        QtCore.QObject.connect(self.pushButton, QtCore.SIGNAL(_fromUtf8("clicked()")), self.insert)
+        QtCore.QObject.connect(self.pushButton_2, QtCore.SIGNAL(_fromUtf8("clicked()")), self.delete)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+    def closeWindow(self):
+        self.conn.commit()
+    def listAll(self):
+        self.listWidget.setObjectName(_fromUtf8("listWidget"))
+        self.c.execute("SELECT * FROM notes order by id desc")
+        i=0;
+        for row in self.c.fetchall():
+            id,content = row
+            item = QtGui.QListWidgetItem()
+            self.listWidget.addItem(item)
+            items = self.listWidget.item(i)
+            items.setData(32, id)
+            items.setText(QtGui.QApplication.translate("MainWindow", content[0:20], None, QtGui.QApplication.UnicodeUTF8))
+            i=i+1
+    def insert(self):
+        self.c.execute('SELECT COUNT(*) FROM notes')
+        rows=self.c.fetchone()[0]
+        rows=rows+1
+        self.c.execute('insert into notes (content)\
+                    values (?)',
+                    ["New "+str(rows)])
+        self.conn.commit()
+        self.listAll()
+        self.listWidget.setCurrentRow(0);
+        self.load()
+    def delete(self):
+        if self.value:
+            self.c.execute('DELETE FROM notes Where id='+str(self.value)+';')
+            self.conn.commit()
+            self.listWidget.takeItem(self.listWidget.currentRow())
+            self.listAll()
+            self.listWidget.setCurrentRow(0);
+            self.load()
+    def changeText(self):
+        t = threading.Thread(target=self.save)
+        t.daemon = True
+        t.start()
+    def save(self):
+        time.sleep(.1)
+        try:
+            text=self.plainTextEdit.toPlainText()
+            u = (text, self.value, )
+            self.c.execute("UPDATE notes SET content=? WHERE id=?", u)
+        except:
+            time.sleep(.1)
+    def load(self):
+        self.listAll()
+        item = self.listWidget.currentItem()
+        self.value = item.data(32)
+        self.textLoad()
+    def textLoad(self):
+        if self.value:
+            #self.plainTextEdit.clear()
+            u = (self.value,)
+            self.c.execute("SELECT * FROM notes WHERE id=?", u)
+            for row in self.c:
+                id,content = row
+                text=content
+            self.plainTextEdit.setPlainText(str(text))
+    def retranslateUi(self, MainWindow):
+        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "NoteFast", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton.setToolTip(QtGui.QApplication.translate("MainWindow", "add note", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButton_2.setToolTip(QtGui.QApplication.translate("MainWindow", "delete note", None, QtGui.QApplication.UnicodeUTF8))
+    def dbCheck(self):
+        self.conn = sqlite3.connect(".notefast.sql",check_same_thread=False)
+        self.c = self.conn.cursor()
+        self.c.execute("""create table if not exists notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        content text)""")
+        self.conn.commit()
+    def dbClose(self):
+        self.conn.close()
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    app.aboutToQuit.connect(ui.closeWindow)
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
