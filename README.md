@@ -2,6 +2,8 @@ notefast
 ========
 
 [NoteFast 1.0](http://www.youtube.com/watch?v=xl4kTEhA1x0)
+
+[pypi](https://pypi.python.org/pypi/NoteFast/)
 	
 
 How to Install Debian Base
